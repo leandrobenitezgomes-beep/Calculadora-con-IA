@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculadora con IA</title>
+  <!-- Fuente moderna desde Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background: #f5f0e6; /* beige claro */
+      font-family: 'Poppins', sans-serif;
+      color: #333; /* gris elegante */
+      text-align: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* círculos decorativos anaranjados con animación más rápida */
+    body::before, body::after {
+      content: "";
+      position: absolute;
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      background: rgba(255, 140, 0, 0.15); /* naranja suave */
+      z-index: -1;
+      animation: moverCirculos 6s infinite alternate ease-in-out; /* más rápido */
+    }
+    body::before {
+      top: -80px;
+      left: -80px;
+    }
+    body::after {
+      bottom: -100px;
+      right: -100px;
+    }
+
+    @keyframes moverCirculos {
+      from { transform: translateY(0px) scale(1); }
+      to { transform: translateY(30px) scale(1.1); }
+    }
+
+    /* calculadora en negro */
+    .calculadora {
+      background:#111111; /* negro elegante */
+      color:#f5f5f5; /* texto claro */
+      width:340px;
+      margin:20px auto;
+      padding:20px;
+      border-radius:16px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.5);
+    }
+    #pantalla {
+      background:#222222; /* gris oscuro */
+      color:#ff8c00; /* naranja corporativo */
+      font-size:28px;
+      text-align:right;
+      padding:15px;
+      border-radius:10px;
+      margin-bottom:0; /* elimina espacio blanco */
+      min-height:40px;
+    }
+
+    /* oculta inputs invisibles para evitar huecos */
+    .calculadora input {
+      display: none;
+    }
+
+    /* botones grises */
+    button {
+      width:60px;
+      height:45px;
+      margin:6px;
+      font-size:18px;
+      border:none;
+      border-radius:10px;
+      background:#555555; /* gris elegante */
+      color:white;
+      cursor:pointer;
+      transition:0.3s;
+    }
+    button:hover {
+      background:#777777; /* gris más claro al pasar */
+    }
+
+    /* historial */
+    #historial {
+      background:#1e1e1e;
+      color:#ccc;
+      font-size:16px;
+      text-align:left;
+      padding:10px;
+      border-radius:10px;
+      margin-top:15px;
+      max-height:120px;
+      overflow-y:auto;
+    }
+    #btnHistorial {
+      width:100%;
+      height:50px;
+      font-size:20px;
+      margin-top:10px;
+      background:#cc5500;
+      color:white;
+      border:none;
+      border-radius:10px;
+      cursor:pointer;
+    }
+    #btnHistorial:hover { background:#b34700; }
+
+    /* bloque IA */
+    #ia {
+      background:#fffaf3;
+      color:#333;
+      width:340px;
+      margin:20px auto;
+      padding:20px;
+      border-radius:16px;
+      box-shadow:0 8px 20px rgba(0,0,0,0.15);
+    }
+    #respuestaIA {
+      margin-top:10px;
+      color:#cc5500; /* naranja más fuerte */
+      font-size:18px;
+      font-weight:bold;
+    }
+    .btnIA {
+      width:220px;
+      height:60px;
+      font-size:22px;
+      background-color:#ff8c00;
+      color:white;
+      border:none;
+      border-radius:12px;
+      cursor:pointer;
+      margin-top:10px;
+      transition:0.3s;
+    }
+    .btnIA:hover { background-color:#e67e00; }
+  </style>
+</head>
+
+<body>
+  <h1>Bienvenidos a mi calculadora</h1>
+
+        <div class="calculadora">
+    <h2>Calculadora</h2>
+    <div id="pantalla"></div>
+    <input id="num1" type="text">
+    <input id="num2" type="text">
+
+    <!-- Botones -->
+    <div>
+      <button onclick="seleccionarOperacion('+')">+</button>
+      <button onclick="seleccionarOperacion('-')">-</button>
+      <button onclick="seleccionarOperacion('*')">×</button>
+      <button onclick="seleccionarOperacion('/')">÷</button>
+      <button onclick="seleccionarOperacion('√')">√</button>
+      <button onclick="calcular()">=</button>
+      <button onclick="borrarUno()">⌫</button>
+      <button onclick="borrarTodo()">C</button>
+      <br><br>
+
+      <!-- Teclado numérico -->
+      <div id="teclado">
+        <button onclick="agregarNumero(7)">7</button>
+        <button onclick="agregarNumero(8)">8</button>
+        <button onclick="agregarNumero(9)">9</button><br>
+        <button onclick="agregarNumero(4)">4</button>
+        <button onclick="agregarNumero(5)">5</button>
+        <button onclick="agregarNumero(6)">6</button><br>
+        <button onclick="agregarNumero(1)">1</button>
+        <button onclick="agregarNumero(2)">2</button>
+        <button onclick="agregarNumero(3)">3</button><br>
+        <button onclick="agregarNumero(0)">0</button>
+      </div>
+    </div>
+
+    <!-- Historial -->
+    <div id="historial"></div>
+    <button id="btnHistorial" onclick="borrarHistorial()">Borrar historial</button>
+  </div>
+
+  <!-- IA debajo de la calculadora -->
+  <div id="ia">
+    <h2>Mini IA 🤖</h2>
+    <textarea id="entradaIA" placeholder="Escribe algo..." rows="3" cols="30"></textarea><br>
+    <button class="btnIA" onclick="responderIA()">Preguntar a la IA</button>
+    <div id="respuestaIA"></div>
+  </div>
+
+  <script>
+    let campoActivo = "num1";
+    let operacion = null;
+
+    function agregarNumero(num) {
+      let campo = document.getElementById(campoActivo);
+      campo.value += num;
+      if (campoActivo === "num1") {
+        document.getElementById("pantalla").innerText = campo.value;
+      } else {
+        document.getElementById("pantalla").innerText =
+          document.getElementById("num1").value + " " + operacion + " " + campo.value;
+      }
+    }
+
+    function seleccionarOperacion(op) {
+      if (op === "*") op = "×";
+      if (op === "/") op = "÷";
+      operacion = op;
+      campoActivo = (op === "√") ? "num1" : "num2";
+      document.getElementById("pantalla").innerText =
+        document.getElementById("num1").value + " " + operacion;
+    }
+
+    function calcular() {
+      let numero1 = parseFloat(document.getElementById("num1").value);
+      let numero2 = parseFloat(document.getElementById("num2").value);
+      let resultado = "";
+
+      switch (operacion) {
+        case "+": resultado = numero1 + numero2; break;
+        case "-": resultado = numero1 - numero2; break;
+        case "×": resultado = numero1 * numero2; break;
+        case "÷": resultado = (numero2 === 0) ? "No se puede dividir por 0" : numero1 / numero2; break;
+        case "√": resultado = (numero1 < 0) ? "No se puede raíz de negativo" : Math.sqrt(numero1); break;
+        default: resultado = "Selecciona una operación";
+      }
+
+      document.getElementById("pantalla").innerText = resultado;
+      campoActivo = "num1";
+      document.getElementById("num1").value = resultado;
+      document.getElementById("num2").value = "";
+
+      let historialDiv = document.getElementById("historial");
+      let operacionTexto = (operacion === "√") ?
+        "√" + numero1 + " = " + resultado :
+        numero1 + " " + operacion + " " + numero2 + " = " + resultado;
+      let nuevoItem = document.createElement("div");
+      nuevoItem.innerText = operacionTexto;
+      historialDiv.prepend(nuevoItem);
+    }
+
+    function borrarUno() {
+      let campo = document.getElementById(campoActivo);
+      campo.value = campo.value.slice(0, -1);
+      document.getElementById("pantalla").innerText = campo.value;
+    }
+
+    function borrarTodo() {
+      document.getElementById("num1").value = "";
+      document.getElementById("num2").value = "";
+      document.getElementById("pantalla").innerText = "";
+      campoActivo = "num1";
+      operacion = null;
+    }
+
+    function borrarHistorial() {
+      document.getElementById("historial").innerHTML = "";
+    }
+
+    // IA con respuestas profesionales
+    function responderIA() {
+      let pregunta = document.getElementById("entradaIA").value.toLowerCase();
+      let respuesta = "";
+
+      if (pregunta.includes("hola")) {
+        respuesta = "👋 ¡Hola! Soy tu mini IA 🤖";
+      } else if (pregunta.includes("yo se jugar ajedrez")) {
+        respuesta = "♟️ Genial, si quieres jugar con nosotros visita chess.com";
+      } else if (pregunta.includes("dime un chiste")) {
+        respuesta = "😂 ¿Qué hace una abeja en el gimnasio? ¡Zum-ba!";
+      } else if (pregunta.includes("adiós")) {
+        respuesta = "👋 Hasta luego, cuídate mucho!";
+      } else {
+        respuesta = "😅 Lo siento, no entendí, pero estoy aprendiendo...";
+      }
+
+      document.getElementById("respuestaIA").innerText = respuesta;
+    }
+  </script>
+</body>
+</html>
